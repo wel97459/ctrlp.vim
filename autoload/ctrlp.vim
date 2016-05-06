@@ -1143,12 +1143,14 @@ endf
 fu! s:AcceptSelection(action)
 	let [md, icr] = [a:action[0], match(a:action, 'r') >= 0]
 	let subm = icr || ( !icr && md == 'e' )
+	let has_marked = exists('s:marked')
+
 	if !subm && s:OpenMulti(md) != -1 | retu | en
 	let str = s:getinput()
 	if subm | if s:SpecInputs(str) | retu | en | en
 	" Get the selected line
-	let line = ctrlp#getcline()
-	if !subm && !s:itemtype && line == '' && line('.') > s:offset
+  let line = ctrlp#getcline()
+  if !subm && !s:itemtype && line == '' && line('.') > s:offset
 		\ && str !~ '\v^(\.\.([\/]\.\.)*[\/]?[.\/]*|/|\\|\?|\@.+)$'
 		cal s:CreateNewFile(md) | retu
 	en
@@ -1163,6 +1165,13 @@ fu! s:AcceptSelection(action)
 		el
 			let [actfunc, exttype] = [s:getextvar('accept'), s:getextvar('act_farg')]
 			let type = exttype == 'dict' ? exttype : 'list'
+      if has_marked && s:getextvar('multsel')
+	      cal call(actfunc, [md, values(s:marked)])
+        return
+      elsei s:getextvar('multsel')
+	      cal call(actfunc, [md, [line]])
+        return
+      en
 		en
 	en
 	let actargs = type == 'dict' ? [{ 'action': md, 'line': line, 'icr': icr }]
